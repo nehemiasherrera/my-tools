@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Calculadora Bonificación + ISR</title>
+    <style>
+        :root {
+            --primary: #10b981;
+            --primary-dark: #059669;
+            --bg-gradient: linear-gradient(135deg, #10b981 0%, #0d9488 100%);
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-light: #6b7280;
+            --danger: #ef4444;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg-gradient);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 15px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            width: 100%;
+            max-width: 480px;
+            text-align: center;
+        }
+
+        h2 { margin: 0 0 5px 0; color: var(--text-main); font-weight: 800; font-size: 1.6rem; }
+        p.subtitle { margin: 0 0 25px 0; color: var(--text-light); font-size: 0.9rem; }
+
+        .input-group { margin-bottom: 20px; text-align: left; }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-main);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 1rem;
+            color: var(--text-main);
+            background-color: #f9fafb;
+            font-family: inherit;
+            outline: none;
+            transition: border 0.2s;
+        }
+        input:focus { border-color: var(--primary); background: #fff; }
+
+        .radio-group { display: flex; gap: 10px; }
+        
+        .radio-btn {
+            flex: 1;
+            text-align: center;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--text-light);
+            background: #f9fafb;
+            transition: all 0.2s;
+            margin: 0; 
+        }
+        
+        .radio-btn.active {
+            border-color: var(--primary);
+            background: #ecfdf5;
+            color: var(--primary-dark);
+        }
+        
+        .radio-btn input { display: none; }
+
+        .btn-calc {
+            width: 100%;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.4);
+        }
+        .btn-calc:active { transform: scale(0.98); }
+
+        .result-box {
+            background: #ecfdf5;
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid #d1fae5;
+            text-align: left;
+            display: none;
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+            color: var(--text-main);
+        }
+
+        .result-row.deduction { color: var(--danger); font-size: 0.9rem; }
+
+        .result-row.total {
+            border-top: 2px dashed #10b981;
+            padding-top: 12px;
+            margin-top: 12px;
+            font-weight: 800;
+            font-size: 1.4rem;
+            color: var(--primary-dark);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+        .badge-green { background: #d1fae5; color: #065f46; }
+        .badge-blue { background: #dbeafe; color: #1e40af; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>Calculadora de Bono</h2>
+        <p class="subtitle">Incluye retención ISR (DGII) e Infotep</p>
+
+        <div class="input-group">
+            <label>Salario Mensual Bruto (RD$)</label>
+            <input type="number" id="salary" placeholder="Ej: 50000" inputmode="decimal" autocomplete="off">
+        </div>
+
+        <div class="input-group">
+            <label>Tiempo en la Empresa</label>
+            <div class="radio-group">
+                <label class="radio-btn active" onclick="seleccionarAntiguedad(this)">
+                    <input type="radio" name="antiguedad" value="45" checked>
+                    Menos de 3 años
+                </label>
+                <label class="radio-btn" onclick="seleccionarAntiguedad(this)">
+                    <input type="radio" name="antiguedad" value="60">
+                    3 años o más
+                </label>
+            </div>
+        </div>
+
+        <button class="btn-calc" onclick="calcular()">Calcular Neto</button>
+
+        <div class="result-box" id="results">
+            <div class="result-row">
+                <span>Antigüedad:</span>
+                <strong id="res-antiguedad">Menos de 3 años</strong>
+            </div>
+            <div class="result-row">
+                <span>Base Legal:</span>
+                <span id="res-tarifa-badge" class="badge badge-green">45 Días</span>
+            </div>
+            <div class="result-row">
+                <span>Días a pagar:</span>
+                <strong id="res-dias-pagar">0.00</strong>
+            </div>
+            
+            <hr style="border: 0; border-top: 1px solid #a7f3d0; margin: 15px 0;">
+
+            <div class="result-row">
+                <span>Bono Bruto:</span>
+                <strong id="res-bruto">RD$ 0.00</strong>
+            </div>
+
+            <div class="result-row deduction">
+                <span>INFOTEP (0.5%):</span>
+                <span id="res-infotep">- RD$ 0.00</span>
+            </div>
+            
+            <div class="result-row deduction">
+                <span>Retención ISR:*</span>
+                <span id="res-isr">- RD$ 0.00</span>
+            </div>
+
+            <div class="result-row total">
+                <span>Neto a Recibir:</span>
+                <span id="res-neto">RD$ 0.00</span>
+            </div>
+            
+            <p style="font-size: 0.75rem; color: #6b7280; margin-top: 15px; background: #f9fafb; padding: 10px; border-radius: 8px; line-height: 1.4;">
+                * <strong>Cálculo del ISR:</strong> Se calcula proyectando tu salario anual menos TSS, sumando el bono, y aplicando la escala vigente de la DGII. <br>
+                (Escala exenta hasta RD$34,685 mensuales).
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const formatter = new Intl.NumberFormat('es-DO', { style: 'currency', currency: 'DOP' });
+
+        const LIMITES_INFERIORES = [0, 34685.00 * 12, 52027.42 * 12, 72260.25 * 12];
+
+        function seleccionarAntiguedad(elemento) {
+            document.querySelectorAll('.radio-btn').forEach(btn => btn.classList.remove('active'));
+            elemento.classList.add('active');
+            elemento.querySelector('input').checked = true;
+        }
+
+        function calcularImpuestoAnual(ingresoAnualNetoTSS) {
+            let impuesto = 0;
+            if (ingresoAnualNetoTSS <= LIMITES_INFERIORES[1]) {
+                return 0;
+            } 
+            else if (ingresoAnualNetoTSS <= LIMITES_INFERIORES[2]) {
+                impuesto = (ingresoAnualNetoTSS - LIMITES_INFERIORES[1]) * 0.15;
+            } 
+            else if (ingresoAnualNetoTSS <= LIMITES_INFERIORES[3]) {
+                impuesto = (2601.36 * 12) + ((ingresoAnualNetoTSS - LIMITES_INFERIORES[2]) * 0.20);
+            } 
+            else {
+                const acumuladoAnterior = 79775.15; 
+                impuesto = acumuladoAnterior + ((ingresoAnualNetoTSS - LIMITES_INFERIORES[3]) * 0.25);
+            }
+            return impuesto;
+        }
+
+        function calcular() {
+            const salary = parseFloat(document.getElementById('salary').value);
+            const antiguedadInput = document.querySelector('input[name="antiguedad"]:checked');
+
+            if (!salary) {
+                alert("Por favor ingresa el salario mensual.");
+                return;
+            }
+
+            const baseDays = parseInt(antiguedadInput.value);
+            const labelAntiguedad = baseDays === 45 ? "Menos de 3 años" : "3 años o más";
+
+            const dailySalary = salary / 23.83;
+            
+            const bonoBruto = dailySalary * baseDays;
+            const infotep = bonoBruto * 0.005;
+            const bonoNetoInfotep = bonoBruto - infotep;
+
+            const descuentoTSSMensual = salary * 0.0591;
+            const salarioMensualCotizableISR = salary - descuentoTSSMensual;
+            const salarioAnualCotizableISR = salarioMensualCotizableISR * 12;
+
+            const isrNormalAnual = calcularImpuestoAnual(salarioAnualCotizableISR);
+            const ingresoTotalAnual = salarioAnualCotizableISR + bonoNetoInfotep;
+            const isrTotalAnual = calcularImpuestoAnual(ingresoTotalAnual);
+
+            let isrBono = isrTotalAnual - isrNormalAnual;
+            if (isrBono < 0) isrBono = 0;
+
+            const bonoFinalNeto = bonoNetoInfotep - isrBono;
+
+            document.getElementById('results').style.display = 'block';
+
+            document.getElementById('res-antiguedad').innerText = labelAntiguedad;
+            
+            const badge = document.getElementById('res-tarifa-badge');
+            badge.innerText = baseDays + " Días Base";
+            badge.className = baseDays === 60 ? "badge badge-blue" : "badge badge-green";
+
+            document.getElementById('res-dias-pagar').innerText = baseDays.toFixed(2);
+            document.getElementById('res-bruto').innerText = formatter.format(bonoBruto);
+            document.getElementById('res-infotep').innerText = "- " + formatter.format(infotep);
+            document.getElementById('res-isr').innerText = "- " + formatter.format(isrBono);
+            document.getElementById('res-neto').innerText = formatter.format(bonoFinalNeto);
+        }
+    </script>
+</body>
+</html>

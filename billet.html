@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Calculadora de Cobros Pro</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --bg-gradient: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%);
+            --card-bg: #ffffff;
+            --text-main: #111827;
+            --text-light: #6b7280;
+        }
+
+        * {
+            box-sizing: border-box; /* Asegura que el padding no aumente el ancho total */
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg-gradient);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 15px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 24px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            width: 100%;
+            max-width: 420px;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        /* HEADER FLEXIBLE */
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #f3f4f6;
+            flex-wrap: wrap; /* Permite que bajen si no caben */
+            gap: 10px;
+        }
+
+        h2 {
+            margin: 0;
+            color: var(--text-main);
+            font-weight: 800;
+            font-size: 1.4rem;
+            text-align: left;
+            flex-grow: 1; /* Ocupa el espacio disponible */
+        }
+
+        .config-box {
+            display: flex;
+            align-items: center;
+            background-color: #f9fafb;
+            padding: 6px 10px;
+            border-radius: 10px;
+            border: 1px solid #e5e7eb;
+            white-space: nowrap; /* Evita que el texto se parta */
+        }
+
+        .config-label {
+            font-size: 0.75rem;
+            color: var(--text-light);
+            margin-right: 6px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .rate-input {
+            width: 50px;
+            padding: 4px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: bold;
+            color: var(--primary);
+            font-size: 0.9rem;
+            outline: none;
+            -moz-appearance: textfield; /* Quita flechas en Firefox */
+        }
+        
+        .rate-input:focus { border-color: var(--primary); }
+
+        /* TABS */
+        .tabs {
+            display: flex;
+            background: #f3f4f6;
+            padding: 4px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            border-radius: 10px;
+            font-weight: 600;
+            color: var(--text-light);
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .tab.active {
+            background: white;
+            color: var(--primary);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        /* INPUTS */
+        .input-group { margin-bottom: 20px; text-align: left; }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-main);
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        input[type="number"].main-input {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #e5e7eb;
+            border-radius: 16px;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-main);
+            background-color: #ffffff;
+            text-align: center;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        
+        input[type="number"].main-input:focus { border-color: var(--primary); }
+
+        /* BOTONES */
+        .actions-row {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .btn-action {
+            border: none;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex: 1; /* Botones ocupan ancho igual */
+            justify-content: center;
+        }
+        
+        .btn-action:active { transform: scale(0.96); }
+        .btn-keyboard { background-color: #eef2ff; color: var(--primary); }
+        .btn-clear { background-color: #fef2f2; color: #dc2626; }
+
+        /* TECLADO */
+        #virtual-keyboard {
+            display: none;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 20px;
+            animation: slideDown 0.2s ease;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .key {
+            padding: 14px;
+            font-size: 1.3rem;
+            font-weight: 600;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            color: var(--text-main);
+            cursor: pointer;
+            box-shadow: 0 2px 0 #e5e7eb;
+        }
+        .key:active { transform: translateY(2px); box-shadow: none; background-color: #f9fafb; }
+        .key-del { color: #dc2626; background-color: #fff1f2; border-color: #fecaca; box-shadow: 0 2px 0 #fecaca; }
+
+        /* RESULTADOS */
+        .result-box {
+            background: #eff6ff;
+            padding: 20px;
+            border-radius: 20px;
+            border: 1px solid #dbeafe;
+            position: relative;
+        }
+        
+        .result-box::before {
+            content: "";
+            position: absolute;
+            left: 0; top: 15%; height: 70%;
+            width: 4px;
+            background: var(--primary);
+            border-radius: 0 4px 4px 0;
+        }
+
+        .result-title {
+            font-size: 0.75em;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .result-amount {
+            font-size: 2.2em;
+            color: var(--text-main);
+            font-weight: 800;
+            margin: 5px 0 10px 0;
+            line-height: 1.1;
+            word-break: break-all; /* Evita que números gigantes rompan el diseño */
+        }
+
+        .fee-pill {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(255,255,255,0.7);
+            padding: 6px 12px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            color: var(--text-light);
+            border: 1px solid rgba(0,0,0,0.03);
+        }
+
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+        /* --- RESPONSIVE PARA CELULARES --- */
+        @media (max-width: 480px) {
+            body { padding: 10px; }
+            .card { padding: 1.5rem; }
+            
+            h2 { font-size: 1.2rem; }
+            
+            input[type="number"].main-input { font-size: 1.8rem; padding: 12px; }
+            
+            .result-amount { font-size: 1.8rem; }
+            
+            /* Ajustes finos para que no se vea apretado */
+            .btn-action { font-size: 0.8rem; padding: 10px; }
+            .key { padding: 12px; font-size: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <div class="header-row">
+            <h2>Calculadora</h2>
+            
+            <div class="config-box">
+                <span class="config-label">% Tasa:</span>
+                <input type="number" id="rateInput" class="rate-input" value="4.75" onchange="calcular()">
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="setMode('receive')" id="tab-receive">Quiero Recibir</button>
+            <button class="tab" onclick="setMode('charge')" id="tab-charge">Voy a Cobrar</button>
+        </div>
+        
+        <div class="input-group">
+            <label id="input-label">Monto que quieres recibir limpio</label>
+            <input type="number" id="amount" class="main-input" placeholder="0.00" oninput="calcular()" inputmode="decimal">
+        </div>
+
+        <div class="actions-row">
+            <button class="btn-action btn-keyboard" onclick="toggleTeclado()">⌨️ Teclado</button>
+            <button class="btn-action btn-clear" onclick="limpiar()">🗑️ Borrar</button>
+        </div>
+
+        <div id="virtual-keyboard">
+            <button class="key" onclick="press('1')">1</button>
+            <button class="key" onclick="press('2')">2</button>
+            <button class="key" onclick="press('3')">3</button>
+            <button class="key" onclick="press('4')">4</button>
+            <button class="key" onclick="press('5')">5</button>
+            <button class="key" onclick="press('6')">6</button>
+            <button class="key" onclick="press('7')">7</button>
+            <button class="key" onclick="press('8')">8</button>
+            <button class="key" onclick="press('9')">9</button>
+            <button class="key" onclick="press('.')">.</button>
+            <button class="key" onclick="press('0')">0</button>
+            <button class="key key-del" onclick="backspace()">⌫</button>
+        </div>
+
+        <div class="result-box">
+            <div class="result-title" id="result-title">DEBES COBRAR EN EL VERIFONE</div>
+            <div class="result-amount" id="mainResult">RD$ 0.00</div>
+            <div class="fee-pill">
+                Comisión: <strong id="feeResult" style="margin-left: 5px;">RD$ 0.00</strong>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentMode = 'receive'; 
+
+        const amountInput = document.getElementById('amount');
+        const rateInput = document.getElementById('rateInput');
+        const keyboard = document.getElementById('virtual-keyboard');
+        
+        const inputLabel = document.getElementById('input-label');
+        const resultTitle = document.getElementById('result-title');
+        const mainResult = document.getElementById('mainResult');
+        const feeResult = document.getElementById('feeResult');
+
+        const formatter = new Intl.NumberFormat('es-DO', {
+            style: 'currency',
+            currency: 'DOP',
+            minimumFractionDigits: 2
+        });
+
+        function setMode(mode) {
+            currentMode = mode;
+            
+            document.getElementById('tab-receive').className = mode === 'receive' ? 'tab active' : 'tab';
+            document.getElementById('tab-charge').className = mode === 'charge' ? 'tab active' : 'tab';
+
+            if (mode === 'receive') {
+                inputLabel.innerText = "Monto que quieres recibir limpio";
+                resultTitle.innerText = "DEBES COBRAR EN EL VERIFONE";
+            } else {
+                inputLabel.innerText = "Monto que vas a cobrar";
+                resultTitle.innerText = "TE LLEGARÁ AL BANCO";
+            }
+            calcular(); 
+        }
+
+        function calcular() {
+            const amount = parseFloat(amountInput.value);
+            const ratePercent = parseFloat(rateInput.value);
+
+            if (isNaN(amount) || amount <= 0 || isNaN(ratePercent)) {
+                mainResult.innerText = "RD$ 0.00";
+                feeResult.innerText = "RD$ 0.00";
+                return;
+            }
+
+            let finalAmount = 0;
+            let fee = 0;
+            const factor = ratePercent / 100;
+
+            if (currentMode === 'receive') {
+                finalAmount = amount / (1 - factor);
+                fee = finalAmount - amount;
+            } else {
+                const netAmount = amount * (1 - factor);
+                fee = amount - netAmount;
+                finalAmount = netAmount;
+            }
+
+            mainResult.innerText = formatter.format(finalAmount);
+            feeResult.innerText = formatter.format(fee);
+        }
+
+        function toggleTeclado() {
+            keyboard.style.display = (keyboard.style.display === 'grid') ? 'none' : 'grid';
+        }
+
+        function press(key) {
+            if (key === '.' && amountInput.value.includes('.')) return;
+            amountInput.value += key;
+            calcular();
+        }
+
+        function backspace() {
+            amountInput.value = amountInput.value.slice(0, -1);
+            calcular();
+        }
+
+        function limpiar() {
+            amountInput.value = '';
+            calcular();
+            // No forzamos el foco aquí para no abrir el teclado nativo del móvil por error si usa el virtual
+        }
+    </script>
+</body>
+</html>
